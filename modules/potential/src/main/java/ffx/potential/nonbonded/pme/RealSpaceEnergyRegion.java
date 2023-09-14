@@ -986,7 +986,7 @@ public class RealSpaceEnergyRegion extends ParallelRegion implements MaskingInte
                             permanentEnergy += ei;
                             count++;
                         }
-                        if (esvTerm) {
+                        if (esvTerm) { // TODO: Add GK changes? I don't think there will be.
                             if (extendedSystem.isTitrating(i)) {
                                 double titrdUdL = 0.0;
                                 double tautdUdL = 0.0;
@@ -1512,7 +1512,7 @@ public class RealSpaceEnergyRegion extends ParallelRegion implements MaskingInte
                     ltzk_local[k] += prefactor * ttm3z;
                 }
             }
-            if (lambdaTermLocal && soft) {
+            if (lambdaTermLocal && soft) { // TODO: Resolve Lambda term & esv term
                 double dRealdL =
                         gl0 * bn1 + (gl1 + gl6) * bn2 + (gl2 + gl7 + gl8) * bn3 + (gl3 + gl5) * bn4 + gl4 * bn5;
                 double d2RealdL2 =
@@ -1852,7 +1852,7 @@ public class RealSpaceEnergyRegion extends ParallelRegion implements MaskingInte
             // logger.info(format(" %d %d Polarization Energy (real): %17.15f", i, k, 0.5 * ereal));
             // logger.info(format(" %d %d Polarization Energy (fix) : %17.15f", i, k, -0.5 * efix));
 
-            if (!(gradientLocal || lambdaTermLocal)) {
+            if (!(gradientLocal || lambdaTermLocal)) { // TODO: resolve lambda & esv terms
                 return polarizationScale * e;
             }
             boolean dorli = false;
@@ -2204,7 +2204,7 @@ public class RealSpaceEnergyRegion extends ParallelRegion implements MaskingInte
             txk_local[k] += scalar * ttm3ix;
             tyk_local[k] += scalar * ttm3iy;
             tzk_local[k] += scalar * ttm3iz;
-            if (lambdaTermLocal) {
+            if (lambdaTermLocal) { // TODO: Resolve lambda & esv terms
                 dUdL += dEdLSign * dlPowPol * e;
                 d2UdL2 += dEdLSign * d2lPowPol * e;
                 scalar = electric * dEdLSign * dlPowPol * selfScale;

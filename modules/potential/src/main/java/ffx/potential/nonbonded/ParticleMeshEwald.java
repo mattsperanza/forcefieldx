@@ -1119,7 +1119,7 @@ public class ParticleMeshEwald implements LambdaInterface {
   }
 
   public void setAtoms(Atom[] atoms, int[] molecule) {
-    if (lambdaTerm && atoms.length != nAtoms) {
+    if (lambdaTerm && atoms.length != nAtoms) { // TODO: This shouldn't throw error if system appears fully protonated
       logger.severe(" Changing the number of atoms is not compatible with use of Lambda.");
     }
     this.atoms = atoms;
@@ -1740,7 +1740,7 @@ public class ParticleMeshEwald implements LambdaInterface {
     // Do the self-consistent field calculation.
     if (polarization != Polarization.NONE && alchemicalParameters.doPolarization) {
       // Compute vacuum dipole moments.
-      if (generalizedKirkwoodTerm) {
+      if (generalizedKirkwoodTerm) { // TODO: Does ESV status affect gk perm field?
         generalizedKirkwoodTerm = false;
         // Run the vacuum SCF.
         selfConsistentField(logger.isLoggable(Level.FINE));
@@ -1749,14 +1749,14 @@ public class ParticleMeshEwald implements LambdaInterface {
 
         generalizedKirkwoodTerm = true;
         // Load the permanent multipole field.
-        permanentMultipoleField();
+        permanentMultipoleField(); // TODO: Figure out why this calculation is done twice
       }
 
       // Compute induced dipoles.
       selfConsistentField(logger.isLoggable(Level.FINE));
 
       if (esvTerm && polarization != Polarization.NONE) {
-        for (int i = 0; i < nAtoms; i++) {
+        for (int i = 0; i < nAtoms; i++) { //TODO: Keep lists of atoms and indicies in extended system to reduce this loop and if check
           if (extendedSystem.isTitrating(i)
               && (extendedSystem.isTitratingHydrogen(i) || extendedSystem.isTitratingHeavy(i))) {
             double dx = field.getX(i);
@@ -1790,6 +1790,8 @@ public class ParticleMeshEwald implements LambdaInterface {
             // i, polarizability[i], dPolardTitrationESV[i], dPolardTautomerESV[i]));
             extendedSystem.addIndElecDeriv(i, titrdUdL * electric * -0.5, tautdUdL * electric * -0.5);
           }
+
+          // TODO: Add this same calculation only for gk field
         }
       }
 
@@ -1896,7 +1898,7 @@ public class ParticleMeshEwald implements LambdaInterface {
       AtomicDoubleArray3D gradGK = generalizedKirkwood.getGrad();
       AtomicDoubleArray3D torqueGK = generalizedKirkwood.getTorque();
 
-      if (reciprocalSpaceTerm && ewaldParameters.aewald > 0.0) {
+      if (reciprocalSpaceTerm && ewaldParameters.aewald > 0.0) { // TODO: Figure out why/when this code (and below) would execute
         reciprocalEnergyRegion.init(
             atoms, crystal, gradient, false, esvTerm,
             use, globalMultipole, fractionalMultipole,
