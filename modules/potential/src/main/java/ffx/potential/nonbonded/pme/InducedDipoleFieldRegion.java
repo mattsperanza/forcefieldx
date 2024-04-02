@@ -51,6 +51,7 @@ import ffx.crystal.Crystal;
 import ffx.crystal.SymOp;
 import ffx.numerics.atomic.AtomicDoubleArray3D;
 import ffx.potential.bonded.Atom;
+import ffx.potential.nonbonded.ParticleMeshEwald;
 import ffx.potential.nonbonded.ReciprocalSpace;
 import ffx.potential.parameters.ForceField;
 import java.util.List;
@@ -309,7 +310,7 @@ public class InducedDipoleFieldRegion extends ParallelRegion {
         int[][] lists = realSpaceLists[0];
         int[] counts = realSpaceCounts[0];
         for (int i = lb; i <= ub; i++) {
-          if (!use[i]) {
+          if (!(use[i])) {
             continue;
           }
           final int moleculei = molecule[i];
@@ -338,7 +339,7 @@ public class InducedDipoleFieldRegion extends ParallelRegion {
           final int npair = counts[i];
           for (int j = 0; j < npair; j++) {
             final int k = list[j];
-            if (!use[k]) {
+            if (!(use[k] && ParticleMeshEwald.useArrays[i][k])) {
               continue;
             }
             boolean sameMolecule = (moleculei == molecule[k]);

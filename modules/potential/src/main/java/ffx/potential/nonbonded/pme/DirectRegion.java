@@ -48,6 +48,8 @@ import edu.rit.pj.ParallelTeam;
 import ffx.numerics.atomic.AtomicDoubleArray3D;
 import ffx.potential.bonded.Atom;
 import ffx.potential.nonbonded.GeneralizedKirkwood;
+import ffx.potential.nonbonded.ParticleMeshEwald;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -175,6 +177,9 @@ public class DirectRegion extends ParallelRegion {
       if (aewald > 0.0) {
         // Add the self and reciprocal space contributions.
         for (int i = lb; i <= ub; i++) {
+          if (i == 78 || i == 79 || i == 80 || i == 648){
+            System.out.println("i = " + i);
+          }
           double[] mpolei = globalMultipole[0][i];
           double[] phii = cartMultipolePhi[i];
           double fx = aewald3 * mpolei[t100] - phii[t100];
@@ -215,6 +220,9 @@ public class DirectRegion extends ParallelRegion {
       final double[][] induced0 = inducedDipole[0];
       final double[][] inducedCR0 = inducedDipoleCR[0];
       for (int i = lb; i <= ub; i++) {
+        if (i == 78 || i == 79 || i == 80 || i == 648){
+            System.out.println("i = " + i);
+        }
         final double polar = polarizability[i];
         final double[] ind = induced0[i];
         final double[] directi = directDipole[i];

@@ -901,6 +901,7 @@ public class ForceFieldEnergy implements CrystalPotential, LambdaInterface {
 
     // Enforce that the number of threads be less than or equal to the number of atoms.
     int nThreads = min(nAtoms, numThreads);
+    nThreads = 1;
     parallelTeam = new ParallelTeam(nThreads);
 
     ForceField forceField = molecularAssembly.getForceField();

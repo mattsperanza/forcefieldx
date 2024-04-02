@@ -119,6 +119,9 @@ public class ParticleMeshEwald implements LambdaInterface {
    * Number of unique tensors for given order.
    */
   private static final int tensorCount = MultipoleTensor.tensorCount(3);
+
+  public static boolean[][] useArrays;
+  public static double[][] lambdaScaleArrays;
   /**
    * If lambdaTerm is true, some ligand atom interactions with the environment are being turned
    * on/off.
@@ -147,7 +150,7 @@ public class ParticleMeshEwald implements LambdaInterface {
    * Specify an SCF predictor algorithm.
    */
   private final SCFPredictorParameters scfPredictorParameters;
-  private final EwaldParameters ewaldParameters;
+  public static EwaldParameters ewaldParameters;
   private final ScaleParameters scaleParameters;
   private final AlchemicalParameters alchemicalParameters;
   private final RealSpaceNeighborParameters realSpaceNeighborParameters;
@@ -217,7 +220,7 @@ public class ParticleMeshEwald implements LambdaInterface {
   /**
    * Cartesian multipoles in the global frame with dimensions of [nsymm][nAtoms][10]
    */
-  public double[][][] globalMultipole;
+  public static double[][][] globalMultipole;
   /**
    * Fractional multipoles in the global frame with dimensions of [nsymm][nAtoms][10]
    */
@@ -386,7 +389,7 @@ public class ParticleMeshEwald implements LambdaInterface {
    */
   private boolean[] use;
   private IntegerSchedule permanentSchedule;
-  private double[][] cartesianMultipolePhi;
+  public static double[][] cartesianMultipolePhi;
   private double[][] fracMultipolePhi;
   private double[][] cartesianInducedDipolePhi;
   private double[][] cartesianInducedDipolePhiCR;
@@ -683,6 +686,31 @@ public class ParticleMeshEwald implements LambdaInterface {
       generalizedKirkwood = new GeneralizedKirkwood(forceField, atoms, this, crystal, parallelTeam, gkCutoff);
     } else {
       generalizedKirkwood = null;
+    }
+
+    useArrays = new boolean[nAtoms][nAtoms];
+    lambdaScaleArrays = new double[nAtoms][nAtoms];
+    for(int i = 0; i < nAtoms; i++) {
+      // Atom number 649 --> Mg2+
+      // Atom number 79-81 --> H20
+      // Subtract one to convert to 0-based index
+      // Current status is just getting SCF to not fail
+      useArrays[i] = new boolean[nAtoms];
+      Arrays.fill(useArrays[i], true);
+      lambdaScaleArrays[i] = new double[nAtoms];
+      Arrays.fill(lambdaScaleArrays[i], 1.0);
+      if (i == 78 || i == 79 || i == 80){
+        useArrays[i][648] = false;
+        lambdaScaleArrays[i][648] = 0.0;
+      }
+      if (i == 648){
+        useArrays[i][78] = false;
+        useArrays[i][79] = false;
+        useArrays[i][80] = false;
+        lambdaScaleArrays[i][78] = 0.0;
+        lambdaScaleArrays[i][79] = 0.0;
+        lambdaScaleArrays[i][80] = 0.0;
+      }
     }
   }
 
@@ -2164,6 +2192,36 @@ public class ParticleMeshEwald implements LambdaInterface {
     if (polarization == Polarization.NONE) {
       return -1;
     }
+
+    double[] xbefore = new double[4];
+    int count = 0;
+    for(int i = 0; i < nAtoms; i++) {
+      // Atom number 649 --> Mg2+
+      // Atom number 79-81 --> H20
+      // Subtract one to convert to 0-based index
+      // Current status is just getting SCF to not fail
+      useArrays[i] = new boolean[nAtoms];
+      Arrays.fill(useArrays[i], true);
+      lambdaScaleArrays[i] = new double[nAtoms];
+      Arrays.fill(lambdaScaleArrays[i], 1.0);
+      if (i == 78 || i == 79 || i == 80){
+        useArrays[i][648] = false;
+        lambdaScaleArrays[i][648] = 0.0;
+        xbefore[count] = field.getX(i);
+        count++;
+      }
+      if (i == 648){
+        useArrays[i][78] = false;
+        useArrays[i][79] = false;
+        useArrays[i][80] = false;
+        lambdaScaleArrays[i][78] = 0.0;
+        lambdaScaleArrays[i][79] = 0.0;
+        lambdaScaleArrays[i][80] = 0.0;
+        xbefore[count] = field.getX(i);
+        count++;
+      }
+    }
+
     long startTime = System.nanoTime();
 
     // Compute the direct induced dipoles.
@@ -2194,6 +2252,20 @@ public class ParticleMeshEwald implements LambdaInterface {
     );
     directRegion.executeWith(parallelTeam);
 
+    double xafter[] = new double[4];
+    count = 0;
+    for(int i = 0; i < nAtoms; i++) {
+      if (i == 78 || i == 79 || i == 80){
+        xafter[count] = field.getX(i);
+        count++;
+      }
+      if (i == 648){
+        xafter[count] = field.getX(i);
+        count++;
+      }
+    }
+
+    count++;
     // Return unless mutual polarization is selected.
     if (polarization != Polarization.MUTUAL) {
       expandInducedDipoles();

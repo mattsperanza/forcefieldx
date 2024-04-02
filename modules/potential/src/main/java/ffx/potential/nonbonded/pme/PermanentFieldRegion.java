@@ -49,6 +49,7 @@ import ffx.crystal.SymOp;
 import ffx.numerics.atomic.AtomicDoubleArray3D;
 import ffx.potential.bonded.Atom;
 import ffx.potential.nonbonded.MaskingInterface;
+import ffx.potential.nonbonded.ParticleMeshEwald;
 import ffx.potential.nonbonded.ReciprocalSpace;
 import ffx.potential.parameters.ForceField;
 
@@ -593,7 +594,7 @@ public class PermanentFieldRegion extends ParallelRegion implements MaskingInter
           int[] ewald = ewalds[i];
           int[] preList = preLists[i];
           for (int k : list) {
-            if (!use[k]) {
+            if (!(use[k] && ParticleMeshEwald.useArrays[i][k])) {
               continue;
             }
             if (lambdaMode == LambdaMode.VAPOR) {
@@ -798,7 +799,7 @@ public class PermanentFieldRegion extends ParallelRegion implements MaskingInter
             int[] ewald = ewalds[i];
             int[] preList = preLists[i];
             for (int k : list) {
-              if (!use[k]) {
+              if (!use[k] && ParticleMeshEwald.useArrays[i][k]) {
                 continue;
               }
               final double xk = xs[k];

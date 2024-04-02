@@ -38,6 +38,8 @@
 package ffx.potential.nonbonded.pme;
 
 import static ffx.numerics.special.Erf.erfc;
+import static ffx.potential.parameters.MultipoleType.*;
+import static ffx.potential.parameters.MultipoleType.t001;
 import static java.lang.String.format;
 import static org.apache.commons.math3.util.FastMath.exp;
 import static org.apache.commons.math3.util.FastMath.max;
@@ -52,12 +54,17 @@ import edu.rit.pj.reduction.SharedDouble;
 import ffx.crystal.Crystal;
 import ffx.crystal.SymOp;
 import ffx.numerics.atomic.AtomicDoubleArray3D;
+import ffx.potential.MolecularAssembly;
 import ffx.potential.bonded.Atom;
 import ffx.potential.nonbonded.ParticleMeshEwald;
 import ffx.potential.parameters.ForceField;
+import ffx.potential.parsers.PDBFilter;
+import ffx.potential.parsers.SystemFilter;
 import ffx.potential.utils.EnergyException;
+import ffx.potential.utils.PotentialsUtils;
 import ffx.utilities.Constants;
 
+import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1289,7 +1296,7 @@ public class PCGSolver {
           final int npair = counts[i];
           for (int j = 0; j < npair; j++) {
             final int k = list[j];
-            if (!use[k]) {
+            if (!(use[k] && ParticleMeshEwald.useArrays[i][k])) {
               continue;
             }
             final double pdk = ipdamp[k];
@@ -1422,7 +1429,7 @@ public class PCGSolver {
             final int npair = counts[i];
             for (int j = 0; j < npair; j++) {
               final int k = list[j];
-              if (!use[k]) {
+              if (!(use[k] && ParticleMeshEwald.useArrays[i][k])) {
                 continue;
               }
               double selfScale = 1.0;
@@ -1556,5 +1563,17 @@ public class PCGSolver {
         z = coordinates[0][2];
       }
     }
+  }
+
+  public static void main(String args[]){
+    PotentialsUtils potentialsUtils = new PotentialsUtils();
+    File xyzFile = new File("/Users/matthewsperanza/Programs/forcefieldx/testing/scf/watersmall.xyz");
+    if(!xyzFile.exists()){
+      System.out.println("File does not exist");
+      return;
+    }
+    MolecularAssembly molecularAssembly = potentialsUtils.open(xyzFile);
+    double e = molecularAssembly.getPotentialEnergy().energy();
+    System.out.println("Energy: " + e);
   }
 }
