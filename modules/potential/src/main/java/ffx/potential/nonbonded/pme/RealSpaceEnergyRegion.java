@@ -68,6 +68,7 @@ import ffx.numerics.atomic.AtomicDoubleArray3D;
 import ffx.potential.bonded.Atom;
 import ffx.potential.extended.ExtendedSystem;
 import ffx.potential.nonbonded.MaskingInterface;
+import ffx.potential.nonbonded.ParticleMeshEwald;
 import ffx.potential.parameters.ForceField;
 import ffx.potential.parameters.MultipoleType.MultipoleFrameDefinition;
 import ffx.potential.utils.EnergyException;
@@ -1847,7 +1848,7 @@ public class RealSpaceEnergyRegion extends ParallelRegion implements MaskingInte
             final double ereal = (gli1 + gli6) * bn1 + (gli2 + gli7) * bn2 + gli3 * bn3;
             final double efix =
                     (gli1 + gli6) * rr3 * psc3 + (gli2 + gli7) * rr5 * psc5 + gli3 * rr7 * psc7;
-            final double e = selfScale * 0.5 * (ereal - efix);
+            final double e = (selfScale * 0.5 * (ereal - efix)) * ParticleMeshEwald.lambdaScaleArrays[i][k];
 
             // logger.info(format(" %d %d Polarization Energy (real): %17.15f", i, k, 0.5 * ereal));
             // logger.info(format(" %d %d Polarization Energy (fix) : %17.15f", i, k, -0.5 * efix));

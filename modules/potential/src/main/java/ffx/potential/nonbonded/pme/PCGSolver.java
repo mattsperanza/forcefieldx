@@ -1567,13 +1567,14 @@ public class PCGSolver {
 
   public static void main(String args[]){
     PotentialsUtils potentialsUtils = new PotentialsUtils();
-    File xyzFile = new File("/Users/matthewsperanza/Programs/forcefieldx/testing/scf/watersmall.xyz");
+    File xyzFile = new File("/Users/matthewsperanza/Programs/forcefieldx/testing/waterArgon/watersmall.xyz");
     if(!xyzFile.exists()){
       System.out.println("File does not exist");
       return;
     }
     MolecularAssembly molecularAssembly = potentialsUtils.open(xyzFile);
-    double e = molecularAssembly.getPotentialEnergy().energy();
-    System.out.println("Energy: " + e);
+    molecularAssembly.getPotentialEnergy().energy(null, true);
+    double e = molecularAssembly.getPotentialEnergy().getPolarizationEnergy();
+    System.out.println("Pol Energy: " + e);
   }
 }

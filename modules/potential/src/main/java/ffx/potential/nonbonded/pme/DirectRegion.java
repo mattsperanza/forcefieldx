@@ -177,9 +177,6 @@ public class DirectRegion extends ParallelRegion {
       if (aewald > 0.0) {
         // Add the self and reciprocal space contributions.
         for (int i = lb; i <= ub; i++) {
-          if (i == 78 || i == 79 || i == 80 || i == 648){
-            System.out.println("i = " + i);
-          }
           double[] mpolei = globalMultipole[0][i];
           double[] phii = cartMultipolePhi[i];
           double fx = aewald3 * mpolei[t100] - phii[t100];
@@ -220,9 +217,6 @@ public class DirectRegion extends ParallelRegion {
       final double[][] induced0 = inducedDipole[0];
       final double[][] inducedCR0 = inducedDipoleCR[0];
       for (int i = lb; i <= ub; i++) {
-        if (i == 78 || i == 79 || i == 80 || i == 648){
-            System.out.println("i = " + i);
-        }
         final double polar = polarizability[i];
         final double[] ind = induced0[i];
         final double[] directi = directDipole[i];

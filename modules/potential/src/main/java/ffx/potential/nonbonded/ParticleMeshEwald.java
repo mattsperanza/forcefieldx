@@ -120,6 +120,7 @@ public class ParticleMeshEwald implements LambdaInterface {
    */
   private static final int tensorCount = MultipoleTensor.tensorCount(3);
 
+  // MARK SCF
   public static boolean[][] useArrays;
   public static double[][] lambdaScaleArrays;
   /**
@@ -688,6 +689,8 @@ public class ParticleMeshEwald implements LambdaInterface {
       generalizedKirkwood = null;
     }
 
+    // MARK SCF
+    //TODO: This is a temporary fix to get SCF to not fail with overlapping alchemical atoms w/ one scf
     useArrays = new boolean[nAtoms][nAtoms];
     lambdaScaleArrays = new double[nAtoms][nAtoms];
     for(int i = 0; i < nAtoms; i++) {
@@ -701,15 +704,16 @@ public class ParticleMeshEwald implements LambdaInterface {
       Arrays.fill(lambdaScaleArrays[i], 1.0);
       if (i == 78 || i == 79 || i == 80){
         useArrays[i][648] = false;
-        lambdaScaleArrays[i][648] = 0.0;
-      }
-      if (i == 648){
+      } else if (i == 648){
         useArrays[i][78] = false;
         useArrays[i][79] = false;
         useArrays[i][80] = false;
-        lambdaScaleArrays[i][78] = 0.0;
-        lambdaScaleArrays[i][79] = 0.0;
-        lambdaScaleArrays[i][80] = 0.0;
+      } else { // All other atoms feel a respective portion of Mg2+ and H20 that overlaps
+        double mg2Lam = .5;
+        lambdaScaleArrays[i][648] = mg2Lam;
+        lambdaScaleArrays[i][78] = 1 - mg2Lam;
+        lambdaScaleArrays[i][79] = 1 - mg2Lam;
+        lambdaScaleArrays[i][80] = 1 - mg2Lam;
       }
     }
   }
@@ -1811,6 +1815,14 @@ public class ParticleMeshEwald implements LambdaInterface {
    * @return return the total electrostatic energy (permanent + polarization).
    */
   private double computeEnergy(boolean print) {
+    int[] list = new int[]{78,79,80,468};
+    for(int j = 0; j < globalMultipole.length; j++) {
+      for (int i = 0; i < list.length; i++) {
+        for(int k = 0; k < globalMultipole[j][list[i]].length; k++) {
+          globalMultipole[j][list[i]][k] *= .5;
+        }
+      }
+    }
     // Find the permanent multipole potential, field, etc.
     permanentMultipoleField();
 
@@ -1839,6 +1851,13 @@ public class ParticleMeshEwald implements LambdaInterface {
 
       // Compute induced dipoles.
       selfConsistentField(logger.isLoggable(Level.FINE));
+      for(int j = 0; j < globalMultipole.length; j++) {
+        for (int i = 0; i < list.length; i++) {
+          for(int k = 0; k < inducedDipole[j][list[i]].length; k++) {
+            inducedDipole[j][list[i]][k] *= .5;
+          }
+        }
+      }
 
       if (esvTerm && polarization != Polarization.NONE) {
         for (int i = 0; i < nAtoms; i++) {
@@ -2094,6 +2113,16 @@ public class ParticleMeshEwald implements LambdaInterface {
       pmeTimings.gkEnergyTotal += System.nanoTime();
     }
 
+    for(int j = 0; j < globalMultipole.length; j++) {
+      for (int i = 0; i < list.length; i++) {
+        for(int k = 0; k < globalMultipole[j][list[i]].length; k++) {
+          globalMultipole[j][list[i]][k] *= 2;
+        }
+        for(int k = 0; k < inducedDipole[j][list[i]].length; k++) {
+          inducedDipole[j][list[i]][k] *= 2;
+        }
+      }
+    }
     // Collect energy terms.
     permanentRealSpaceEnergy += ereal;
     permanentSelfEnergy += eself;
@@ -2193,6 +2222,7 @@ public class ParticleMeshEwald implements LambdaInterface {
       return -1;
     }
 
+    // MARK SCF
     double[] xbefore = new double[4];
     int count = 0;
     for(int i = 0; i < nAtoms; i++) {
@@ -2200,23 +2230,11 @@ public class ParticleMeshEwald implements LambdaInterface {
       // Atom number 79-81 --> H20
       // Subtract one to convert to 0-based index
       // Current status is just getting SCF to not fail
-      useArrays[i] = new boolean[nAtoms];
-      Arrays.fill(useArrays[i], true);
-      lambdaScaleArrays[i] = new double[nAtoms];
-      Arrays.fill(lambdaScaleArrays[i], 1.0);
       if (i == 78 || i == 79 || i == 80){
-        useArrays[i][648] = false;
-        lambdaScaleArrays[i][648] = 0.0;
         xbefore[count] = field.getX(i);
         count++;
       }
       if (i == 648){
-        useArrays[i][78] = false;
-        useArrays[i][79] = false;
-        useArrays[i][80] = false;
-        lambdaScaleArrays[i][78] = 0.0;
-        lambdaScaleArrays[i][79] = 0.0;
-        lambdaScaleArrays[i][80] = 0.0;
         xbefore[count] = field.getX(i);
         count++;
       }
@@ -2252,6 +2270,7 @@ public class ParticleMeshEwald implements LambdaInterface {
     );
     directRegion.executeWith(parallelTeam);
 
+    // MARK SCF
     double xafter[] = new double[4];
     count = 0;
     for(int i = 0; i < nAtoms; i++) {

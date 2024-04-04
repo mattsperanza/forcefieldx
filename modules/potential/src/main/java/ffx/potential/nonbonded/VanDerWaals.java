@@ -1662,7 +1662,8 @@ public class VanDerWaals implements MaskingInterface, LambdaInterface {
           for (final int k : neighbors) {
             // Check that atom k is in use.
             // Do not compute vdW interactions between asymmetric unit neural network atoms.
-            if (!use[k] || (iNN && neuralNetwork[k])) {
+            // MARK SCF
+            if (!use[k] || (iNN && neuralNetwork[k]) || !ParticleMeshEwald.useArrays[i][k]) {
               continue;
             }
             // Flag to indicate if atom k is effected by an extended system variable.
@@ -1767,7 +1768,8 @@ public class VanDerWaals implements MaskingInterface, LambdaInterface {
               if (esvi || esvk) {
                 esvik = esvVdwPrefactori[0] * esvVdwPrefactork[0];
               }
-              e += eik * taper * esvik;
+              // MARK SCF
+              e += eik * taper * esvik * ParticleMeshEwald.lambdaScaleArrays[i][k];
               count++;
               if (!gradient && !soft) {
                 continue;
@@ -1903,7 +1905,8 @@ public class VanDerWaals implements MaskingInterface, LambdaInterface {
             // Loop over the neighbor list.
             final int[] neighbors = list[i];
             for (final int k : neighbors) {
-              if (!use[k]) {
+              // MARK SCF
+              if (!use[k] || !ParticleMeshEwald.useArrays[i][k]) {
                 continue;
               }
               final boolean esvk = esvTerm && esvSystem.isTitratingHydrogen(k);
@@ -1975,7 +1978,8 @@ public class VanDerWaals implements MaskingInterface, LambdaInterface {
                 if (esvi || esvk) {
                   esvik = esvVdwPrefactori[0] * esvVdwPrefactork[0];
                 }
-                e += selfScale * eik * taper * esvik;
+                // MARK SCF
+                e += selfScale * eik * taper * esvik * ParticleMeshEwald.lambdaScaleArrays[i][k];
                 count++;
                 if (!gradient && !soft) {
                   continue;
