@@ -2,7 +2,7 @@
 //
 // Title:       Force Field X.
 // Description: Force Field X - Software for Molecular Biophysics.
-// Copyright:   Copyright (c) Michael J. Schnieders 2001-2023.
+// Copyright:   Copyright (c) Michael J. Schnieders 2001-2024.
 //
 // This file is part of Force Field X.
 //
@@ -57,11 +57,12 @@ import ffx.algorithms.dynamics.thermostats.Berendsen;
 import ffx.algorithms.dynamics.thermostats.Bussi;
 import ffx.algorithms.dynamics.thermostats.Thermostat;
 import ffx.algorithms.dynamics.thermostats.ThermostatEnum;
+import ffx.algorithms.thermodynamics.OrthogonalSpaceTempering;
 import ffx.crystal.Crystal;
 import ffx.numerics.Constraint;
 import ffx.numerics.Potential;
 import ffx.numerics.math.RunningStatistics;
-import ffx.potential.ForceFieldEnergyOpenMM;
+import ffx.potential.openmm.OpenMMEnergy;
 import ffx.potential.MolecularAssembly;
 import ffx.potential.SystemState;
 import ffx.potential.UnmodifiableState;
@@ -277,7 +278,7 @@ public class MolecularDynamics implements Runnable, Terminatable {
       }
     }
 
-    boolean oMMLogging = potential instanceof ForceFieldEnergyOpenMM;
+    boolean oMMLogging = potential instanceof OpenMMEnergy;
     List<Constraint> constraints = potentialEnergy.getConstraints();
 
     // Set the integrator.
@@ -399,8 +400,8 @@ public class MolecularDynamics implements Runnable, Terminatable {
         // implementing Collection.
         // Nor does javax.swing have a quick "get me the leaves" method that I was able to find.
         boolean ommLeaves = potentialEnergy.getUnderlyingPotentials().stream()
-            .anyMatch((Potential p) -> p instanceof ForceFieldEnergyOpenMM);
-        ommLeaves = ommLeaves || potentialEnergy instanceof ForceFieldEnergyOpenMM;
+            .anyMatch((Potential p) -> p instanceof OpenMMEnergy);
+        ommLeaves = ommLeaves || potentialEnergy instanceof OpenMMEnergy;
         if (ommLeaves) {
           return new MolecularDynamicsOpenMM(assembly, potentialEnergy, listener,
               requestedThermostat, requestedIntegrator);
@@ -432,8 +433,8 @@ public class MolecularDynamics implements Runnable, Terminatable {
     } else {
       // TODO: Replace this with a better check.
       boolean ommLeaves = potentialEnergy.getUnderlyingPotentials().stream()
-          .anyMatch((Potential p) -> p instanceof ForceFieldEnergyOpenMM);
-      ommLeaves = ommLeaves || potentialEnergy instanceof ForceFieldEnergyOpenMM;
+          .anyMatch((Potential p) -> p instanceof OpenMMEnergy);
+      ommLeaves = ommLeaves || potentialEnergy instanceof OpenMMEnergy;
       if (ommLeaves) {
         return MDEngine.OPENMM;
       } else {
@@ -998,16 +999,13 @@ public class MolecularDynamics implements Runnable, Terminatable {
         logger.info(format("\n Average Values for the Last %d Out of %d Dynamics Steps\n",
             trajectoryFrequency, step));
         logger.info(format("  Simulation Time  %16.4f Picosecond", step * dt));
-        logger.info(
-            format("  Total Energy     %16.4f Kcal/mole   (+/-%9.4f)", totalEnergyStats.getMean(),
+        logger.info(format("  Total Energy     %16.4f Kcal/mole   (+/-%9.4f)", totalEnergyStats.getMean(),
                 totalEnergyStats.getStandardDeviation()));
         logger.info(format("  Potential Energy %16.4f Kcal/mole   (+/-%9.4f)",
             potentialEnergyStats.getMean(), potentialEnergyStats.getStandardDeviation()));
-        logger.info(
-            format("  Kinetic Energy   %16.4f Kcal/mole   (+/-%9.4f)", kineticEnergyStats.getMean(),
+        logger.info(format("  Kinetic Energy   %16.4f Kcal/mole   (+/-%9.4f)", kineticEnergyStats.getMean(),
                 kineticEnergyStats.getStandardDeviation()));
-        logger.info(
-            format("  Temperature      %16.4f Kelvin      (+/-%9.4f)\n", temperatureStats.getMean(),
+        logger.info(format("  Temperature      %16.4f Kelvin      (+/-%9.4f)\n", temperatureStats.getMean(),
                 temperatureStats.getStandardDeviation()));
         totalEnergyStats.reset();
         potentialEnergyStats.reset();
@@ -1036,21 +1034,21 @@ public class MolecularDynamics implements Runnable, Terminatable {
 
   /** Write out a restart file. */
   public void writeRestart() {
-    potential.writeAdditionalRestartInfo(true);
     String dynName = FileUtils.relativePathTo(restartFile).toString();
     double[] x = state.x();
     double[] v = state.v();
     double[] a = state.a();
     double[] aPrevious = state.aPrevious();
     if (dynFilter.writeDYN(restartFile, molecularAssembly[0].getCrystal(), x, v, a, aPrevious)) {
-      logger.log(basicLogging, " Wrote dynamics restart file to " + dynName);
+      logger.log(basicLogging, format(" Wrote dynamics restart to:  %s.", dynName));
     } else {
-      logger.log(basicLogging, " Writing dynamics restart file to " + dynName + " failed");
+      logger.log(basicLogging, format(" Writing dynamics restart failed:  %s.", dynName));
     }
     if (esvSystem != null) {
       esvSystem.writeRestart();
       esvSystem.writeLambdaHistogram(false);
     }
+    potential.writeAdditionalRestartInfo(true);
   }
 
   /**
@@ -1166,11 +1164,21 @@ public class MolecularDynamics implements Runnable, Terminatable {
     // Compute the current potential energy.
     double[] x = state.x();
     double[] gradient = state.gradient();
-    if (esvSystem != null && potential instanceof ForceFieldEnergyOpenMM) {
-      state.setPotentialEnergy(
-          ((ForceFieldEnergyOpenMM) potential).energyAndGradientFFX(x, gradient));
+
+    boolean propagateLambda = true;
+    if (potential instanceof OrthogonalSpaceTempering orthogonalSpaceTempering) {
+      propagateLambda = orthogonalSpaceTempering.getPropagateLambda();
+      orthogonalSpaceTempering.setPropagateLambda(false);
+    }
+
+    if (esvSystem != null && potential instanceof OpenMMEnergy) {
+      state.setPotentialEnergy(((OpenMMEnergy) potential).energyAndGradientFFX(x, gradient));
     } else {
       state.setPotentialEnergy(potential.energyAndGradient(x, gradient));
+    }
+
+    if (potential instanceof OrthogonalSpaceTempering orthogonalSpaceTempering) {
+      orthogonalSpaceTempering.setPropagateLambda(propagateLambda);
     }
 
     // Initialize current and previous accelerations.
@@ -1225,11 +1233,9 @@ public class MolecularDynamics implements Runnable, Terminatable {
     initialized = true;
 
     logger.log(basicLogging,
-        format("\n  %8s %12s %12s %12s %8s %8s", "Time", "Kinetic", "Potential", "Total", "Temp",
-            "CPU"));
+        format("\n  %8s %12s %12s %12s %8s %8s", "Time", "Kinetic", "Potential", "Total", "Temp", "CPU"));
     logger.log(basicLogging,
-        format("  %8s %12s %12s %12s %8s %8s", "psec", "kcal/mol", "kcal/mol", "kcal/mol", "K",
-            "sec"));
+        format("  %8s %12s %12s %12s %8s %8s", "psec", "kcal/mol", "kcal/mol", "kcal/mol", "K", "sec"));
     logger.log(basicLogging, format("  %8s %12.4f %12.4f %12.4f %8.2f", "", state.getKineticEnergy(),
         state.getPotentialEnergy(), state.getTotalEnergy(), state.getTemperature()));
 
@@ -1272,9 +1278,9 @@ public class MolecularDynamics implements Runnable, Terminatable {
         if (esvSystem == null) {
           XYZFilter xyzFilter = new XYZFilter(archiveFile, assembly, forceField, properties);
           if (xyzFilter.writeFile(archiveFile, true, extraLines)) {
-            logger.log(basicLogging, format(" Appended to archive %s", aiName));
+            logger.log(basicLogging, format(" Appended snapshot to:       %s", aiName));
           } else {
-            logger.warning(format(" Appending to archive %s failed.", aiName));
+            logger.warning(          format(" Appending snapshot failed:  %s", aiName));
           }
         } else {
           XPHFilter xphFilter = new XPHFilter(archiveFile, assembly, forceField, properties,
@@ -1366,10 +1372,8 @@ public class MolecularDynamics implements Runnable, Terminatable {
       }
 
       // Compute the potential energy and gradients.
-
-      if (esvSystem != null && potential instanceof ForceFieldEnergyOpenMM) {
-        state.setPotentialEnergy(
-            ((ForceFieldEnergyOpenMM) potential).energyAndGradientFFX(state.x(), state.gradient()));
+      if (esvSystem != null && potential instanceof OpenMMEnergy) {
+        state.setPotentialEnergy(((OpenMMEnergy) potential).energyAndGradientFFX(state.x(), state.gradient()));
       } else {
         state.setPotentialEnergy(potential.energyAndGradient(state.x(), state.gradient()));
       }

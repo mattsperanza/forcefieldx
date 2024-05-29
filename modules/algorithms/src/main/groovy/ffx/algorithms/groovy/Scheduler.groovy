@@ -2,7 +2,7 @@
 //
 // Title:       Force Field X.
 // Description: Force Field X - Software for Molecular Biophysics.
-// Copyright:   Copyright (c) Michael J. Schnieders 2001-2023.
+// Copyright:   Copyright (c) Michael J. Schnieders 2001-2024.
 //
 // This file is part of Force Field X.
 //
@@ -234,11 +234,11 @@ class Scheduler extends AlgorithmsScript {
     for (p = 0; p < processes; p++) {
       for (node in hostnames) {
         sb.append("backend node" + i + " "
-                + CPUs + " "
-                + node + " "
-                + java + " "
-                + classpath + " "
-                + arg + "\n")
+            + CPUs + " "
+            + node + " "
+            + java + " "
+            + classpath + " "
+            + arg + "\n")
         i++
       }
     }
