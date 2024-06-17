@@ -705,15 +705,19 @@ public class PhReplicaExchange implements Terminatable {
     x = replica.getCoordinates();
     potential.energy(x);
     openMM.setCoordinates(x);
-
+    
+    logger.info(" -------------------------------->> Begin OMM Dynamics w/ energy (cpu): " + potential.energy(x));
     openMM.dynamic(confSteps, timeStep, printInterval, saveInterval, temp, initVelocities, dyn);
-
+    logger.info(" -------------------------------->> End OMM Dynamics");
     x = openMM.getCoordinates();
+    logger.info(" Got coords from gpu");
     replica.setCoordinates(x);
+    logger.info(" Set cpu coords");
 
     double forceWriteInterval = titrSteps * .001;
+    logger.info("Start cpu dyn");
     replica.dynamic(titrSteps, timeStep, printInterval, forceWriteInterval, temp, initVelocities, dyn);
-
+    logger.info(" End cpu dyn");
     reEvaulateAcidostats();
 
     extendedSystem.getESVHistogram(parametersHis[rank]);
@@ -786,7 +790,7 @@ public class PhReplicaExchange implements Terminatable {
     }
   }
 
-  public int[][] setTestingParametersAndExchangeOnce() {
+  public int[] setTestingParametersAndExchangeOnce() {
     // Copy parameters from validRestart directory
     int[] temp = new int[]{2, 3, 0, 1, 6, 7, 4, 5};
     System.arraycopy(temp, 0, pH2Rank, 0, temp.length);
@@ -821,6 +825,6 @@ public class PhReplicaExchange implements Terminatable {
     System.arraycopy(rank2Ph, 0, temp4, pH2Rank.length, rank2Ph.length);
 
 
-    return temp;
+    return temp2;
   }
 }

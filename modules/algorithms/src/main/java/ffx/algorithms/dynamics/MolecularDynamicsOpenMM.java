@@ -208,9 +208,10 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
 
     // Run the MD steps.
     mainLoop(numSteps);
-
+    logger.info("\n Finished mainLoop();!");
     // Post-run cleanup operations.
     postRun();
+    logger.info("\n Finished PostRun(); returning!");
   }
 
   /**
@@ -368,9 +369,10 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
 
       // Take MD steps in OpenMM.
       long takeStepsTime = -System.nanoTime();
+      logger.info(" Taking " + intervalSteps + " steps!\n");
       takeOpenMMSteps(intervalSteps);
       takeStepsTime += System.nanoTime();
-      logger.fine(String.format("\n Took steps in %6.3f", takeStepsTime * NS2SEC));
+      logger.info(String.format("\n Took steps in %6.3f", takeStepsTime * NS2SEC));
       totalSimTime += intervalSteps * dt;
 
       // Update the total step count.
@@ -380,7 +382,7 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
       updateFromOpenMM(i, running);
       secondUpdateTime += System.nanoTime();
 
-      logger.fine(String.format("\n Update finished in %6.3f", secondUpdateTime * NS2SEC));
+      logger.info(String.format("\n Update finished in %6.3f", secondUpdateTime * NS2SEC));
     }
   }
 
@@ -409,19 +411,30 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
   private void getAllOpenMMVariables() {
     int mask = OpenMM_State_Energy | OpenMM_State_Positions | OpenMM_State_Velocities | OpenMM_State_Forces;
     OpenMMState openMMState = openMMEnergy.getOpenMMState(mask);
+    logger.info(" Finished setting OMM state");
     state.setPotentialEnergy(openMMState.potentialEnergy);
     state.setKineticEnergy(openMMState.kineticEnergy);
     state.setTemperature(openMMEnergy.getSystem().getTemperature(openMMState.kineticEnergy));
+    logger.info(" Set cpu state thermodynamic variables");
     openMMState.getPositions(state.x());
+    logger.info(" Got OMM positions");
     Crystal crystal = openMMEnergy.getCrystal();
     if (!crystal.aperiodic()) {
+      logger.info(" Cell not aperiodic control flow");
       double[][] cellVectors = openMMState.getPeriodicBoxVectors();
+      logger.info(" Got cell vectors");
       crystal.setCellVectors(cellVectors);
-      openMMEnergy.setCrystal(crystal);
+      logger.info(" Set cell vectors");
+      //openMMEnergy.setCrystal(crystal);
+      logger.info(" Set OMM crystal");
     }
+    logger.info(" Got ommEnergy crystal");
     openMMState.getVelocities(state.v());
+    logger.info(" Got omm vel");
     openMMState.getAccelerations(state.a());
+    logger.info(" Got OMM accel");
     openMMState.destroy();
+    logger.info(" Destroyed OMM state");
   }
 
   /**
@@ -434,8 +447,9 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
   private void updateFromOpenMM(long i, boolean running) {
 
     double priorPE = state.getPotentialEnergy();
-
+    logger.info("Finished priorPE: " + priorPE);
     obtainVariables.run();
+    logger.info("Finished obtainVar.run();");
 
     if (running) {
       if (i == 0) {
