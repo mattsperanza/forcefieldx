@@ -112,6 +112,7 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
    * MBAR observable ensemble estimates.
    */
   private double[] mbarObservableEnsembleAverages;
+  private double[] simpleAverages;
   private double[] mbarObservableEnsembleAverageUncertainties;
   /**
    * MBAR free-energy difference uncertainties.
@@ -156,12 +157,13 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
   private double[][] reducedPotentials;
 
   private double[][] oAllFlat;
+  private double[][][] oAll;
   private double[][] biasFlat;
+  private double[][][] biasAll;
   /**
    * Seed MBAR calculation with another free energy estimation (BAR,ZWANZIG) or zeros
    */
   private SeedType seedType;
-
 
 
   /**
@@ -416,7 +418,7 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
       if (stream(mbarFEEstimatesTemp).anyMatch(Double::isInfinite) || stream(mbarFEEstimatesTemp).anyMatch(Double::isNaN)) {
         throw new IllegalArgumentException("MBAR contains NaNs or Infs during startup SCI ");
       }
-      if(converged(prevMBAR)) {
+      if(converged(prevMBAR, mbarFEEstimatesTemp, tolerance)) {
         break;
       }
     }
@@ -426,7 +428,7 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
     }
 
     try {
-      if (nLambdaStatesTemp > 100 && !converged(prevMBAR)) { // L-BFGS optimization for high granularity windows where hessian^-1 is expensive
+      if (nLambdaStatesTemp > 100 && !converged(prevMBAR, mbarFEEstimatesTemp, tolerance)) { // L-BFGS optimization for high granularity windows where hessian^-1 is expensive
         if (MultistateBennettAcceptanceRatio.VERBOSE) {
           logger.info(" L-BFGS optimization started.");
         }
@@ -439,7 +441,7 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
         LBFGS.minimize(nLambdaStatesTemp, mCorrections, x, mbarObjectiveFunction(reducedPotentialsTemp, snapsTemp, mbarFEEstimatesTemp),
             grad, eps, 1000, this, listener);
         arraycopy(x, 0, mbarFEEstimatesTemp, 0, nLambdaStatesTemp);
-      } else if (!converged(prevMBAR)){ // Newton optimization if hessian inversion isn't too expensive
+      } else if (!converged(prevMBAR, mbarFEEstimatesTemp, tolerance)){ // Newton optimization if hessian inversion isn't too expensive
         if (MultistateBennettAcceptanceRatio.VERBOSE) {
           logger.info(" Newton optimization started.");
         }
@@ -464,7 +466,7 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
 
     // Self-consistent iteration is used to finish off optimization of MBAR objective function
     int sciIter = 0;
-    while (!converged(prevMBAR) && sciIter < 1000) {
+    while (!converged(prevMBAR, mbarFEEstimates, tolerance) && sciIter < 1000) {
       prevMBAR = copyOf(mbarFEEstimates, nLambdaStates);
       mbarFEEstimates = mbarSelfConsistentUpdate(reducedPotentials, snaps, mbarFEEstimates);
       for (int i = 0; i < nLambdaStates; i++) { // SOR for acceleration
@@ -508,15 +510,16 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
    * Checks if the MBAR free energy estimates have converged by comparing the difference
    * between the previous and current free energies. The tolerance is set by the user.
    *
-   * @param prevMBAR previous MBAR free energy estimates.
+   * @param prevMBAR            previous MBAR free energy estimates.
+   * @param mbarFEEstimatesTemp
    * @return true if converged, false otherwise
    */
-  private boolean converged(double[] prevMBAR) {
+  private static boolean converged(double[] prevMBAR, double[] mbarFEEstimatesTemp, double tol) {
     double[] differences = new double[prevMBAR.length];
     for (int i = 0; i < prevMBAR.length; i++) {
-      differences[i] = abs(prevMBAR[i] - mbarFEEstimates[i]);
+      differences[i] = abs(prevMBAR[i] - mbarFEEstimatesTemp[i]);
     }
-    return stream(differences).allMatch(d -> d < tolerance);
+    return stream(differences).allMatch(d -> d < tol);
   }
 
   /**
@@ -731,16 +734,12 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
    * @param multiDataObservable
    */
   public void setBiasData(double[][][] biasAll, boolean multiDataObservable) {
-    biasFlat = new double[biasAll.length][biasAll.length * biasAll[0][0].length];
     if(multiDataObservable){ // Flatten data
-      int[] snapsT = new int[biasAll.length];
-      int[] nanCount = new int[biasAll.length];
+      biasFlat = new double[biasAll.length][biasAll.length * biasAll[0][0].length];
       for (int i = 0; i < biasAll.length; i++) {
         ArrayList<Double> temp = new ArrayList<>();
         double maxBias = Double.NEGATIVE_INFINITY;
         for(int j = 0; j < biasAll.length; j++) {
-          int count = 0;
-          int countNaN = 0;
           for(int k = 0; k < biasAll[j][i].length; k++) {
             // Don't include NaN values
             if (!Double.isNaN(biasAll[j][i][k])) {
@@ -748,13 +747,8 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
               if(biasAll[j][i][k] > maxBias){
                 maxBias = biasAll[j][i][k];
               }
-              count++;
-            } else {
-              countNaN++;
             }
           }
-          snapsT[j] = count;
-          nanCount[j] = countNaN;
         }
         biasFlat[i] = temp.stream().mapToDouble(Double::doubleValue).toArray();
         // Regularize bias for this lambda
@@ -763,19 +757,20 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
         }
       }
     } else { // Put relevant data into the 0th index
-      int count = 0;
+      ArrayList<Double> temp = new ArrayList<>();
       double maxBias = Double.NEGATIVE_INFINITY;
       for (int i = 0; i < biasAll.length; i++){
         for(int j = 0; j < biasAll[0][0].length; j++){
           if(!Double.isNaN(biasAll[i][i][j])){
-            biasFlat[0][count] = biasAll[i][i][j];
+            temp.add(biasAll[i][i][j]); // Note [i][i] indexing
             if(biasAll[i][i][j] > maxBias){
               maxBias = biasAll[i][i][j];
             }
-            count++;
           }
         }
       }
+      biasFlat = new double[1][temp.size()];
+      biasFlat[0] = temp.stream().mapToDouble(Double::doubleValue).toArray();
       // Regularize bias for this lambda
       for(int i = 0; i < biasFlat[0].length; i++){
         biasFlat[0][i] -= maxBias;
@@ -800,45 +795,49 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
   }
 
   public void setObservableData(double[][][] oAll, boolean multiDataObservable, boolean uncertainties) {
-    oAllFlat = new double[oAll.length][oAll.length * oAll[0][0].length];
+    this.oAll = oAll;
     if(multiDataObservable){ // Flatten data
-      int[] snapsT = new int[oAll.length];
-      int[] nanCount = new int[oAll.length];
+      oAllFlat = new double[eAllFlat.length][eAllFlat[0].length];
       for (int i = 0; i < oAll.length; i++) {
         ArrayList<Double> temp = new ArrayList<>();
         for(int j = 0; j < oAll.length; j++) {
-          int count = 0;
-          int countNaN = 0;
           for(int k = 0; k < oAll[j][i].length; k++) {
             // Don't include NaN values
             if (!Double.isNaN(oAll[j][i][k])) {
               temp.add(oAll[j][i][k]);
-              count++;
-            } else {
-              countNaN++;
             }
           }
-          snapsT[j] = count;
-          nanCount[j] = countNaN;
         }
         oAllFlat[i] = temp.stream().mapToDouble(Double::doubleValue).toArray();
       }
     } else { // Put relevant data into the 0th index
-      int count = 0;
+      ArrayList<Double> temp = new ArrayList<>();
       for (int i = 0; i < oAll.length; i++){
         for(int j = 0; j < oAll[0][0].length; j++){
           if(!Double.isNaN(oAll[i][i][j])){
-            oAllFlat[0][count] = oAll[i][i][j]; // Note [i][i] indexing
-            count++;
+            temp.add(oAll[i][i][j]); // Note [i][i] indexing
           }
         }
       }
+      oAllFlat = new double[1][temp.size()];
+      oAllFlat[0] = temp.stream().mapToDouble(Double::doubleValue).toArray();
     }
     // OST Data
     if (biasFlat != null) {
       for(int i = 0; i< oAllFlat.length; i++) {
         for (int j = 0; j < oAllFlat[i].length; j++) {
           oAllFlat[i][j] *= exp(biasFlat[i][j]/rtValues[i]);
+        }
+      }
+    }
+    if(biasAll != null){
+      for (int i = 0; i < oAll.length; i++) {
+        for(int j = 0; j < oAll[i].length; j++) {
+          for(int k = 0; k < oAll[i][j].length; k++) {
+            if (!Double.isNaN(oAll[i][j][k]) && !Double.isNaN(biasAll[i][j][k])) {
+              this.oAll[i][j][k] *= exp(biasAll[i][j][k]/rtValues[i]);
+            }
+          }
         }
       }
     }
@@ -865,6 +864,57 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
     DataSet dSet = new DoublesDataSet(Integrate1DNumeric.generateXPoints(0,1, mbarObservableEnsembleAverages.length, false),
             mbarObservableEnsembleAverages, false);
     return Integrate1DNumeric.integrateData(dSet, Integrate1DNumeric.IntegrationSide.LEFT, Integrate1DNumeric.IntegrationType.TRAPEZOIDAL);
+  }
+
+  /**
+   * Compute the average of observable data.
+   *
+   * @param potentialWeighted - if true, weight observable data probability given by exp(U)/Z.
+   */
+  public void fillAverageValues(boolean potentialWeighted){
+    if (oAllFlat.length != 1) {
+      mbarObservableEnsembleAverages = new double[oAllFlat.length];
+      for (int i = 0; i < oAllFlat.length; i++) {
+        if(potentialWeighted){
+          double[] prob = Arrays.copyOf(reducedPotentials[i], oAllFlat[i].length);
+          // take negative of prob/redPotentials to get the correct sign for the exponential
+          for(int j = 0; j < prob.length; j++){
+              prob[j] *= -1;
+          }
+          softMax(prob);
+          for(int j = 0; j < oAllFlat[i].length; j++){
+            mbarObservableEnsembleAverages[i] += prob[j] * oAllFlat[i][j];
+          }
+        } else{
+          mbarObservableEnsembleAverages[i] = stream(oAllFlat[i]).average().getAsDouble();
+        }
+      }
+    } else {
+      mbarObservableEnsembleAverages = new double[oAll.length];
+      for (int i = 0; i < oAll.length; i++) {
+        // Need to grab the observable data from simulations at the same lambda value
+        ArrayList<Double> temp = new ArrayList<>();
+        ArrayList<Double> tempWeights = new ArrayList<>();
+        for (int j = 0; j < eAll[i][i].length; j++) {
+          if (!Double.isNaN(oAll[i][i][j])) {
+            temp.add(oAll[i][i][j]);
+            if (potentialWeighted) {
+              tempWeights.add(-eAll[i][i][j] / rtValues[i]);
+            }
+          }
+        }
+        if(potentialWeighted){
+          double[] prob = tempWeights.stream().mapToDouble(Double::doubleValue).toArray();
+          double[] observe = temp.stream().mapToDouble(Double::doubleValue).toArray();
+          softMax(prob);
+          for(int j = 0; j < prob.length; j++){
+              mbarObservableEnsembleAverages[i] += prob[j] * observe[j];
+          }
+        } else{
+          mbarObservableEnsembleAverages[i] = temp.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+        }
+      }
+    }
   }
 
   /**
@@ -904,7 +954,8 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
   private double[] computeExpectations(double[] samples){
     double[][] W = mbarW(reducedPotentials, snaps, mbarFEEstimates);
     if (W[0].length != samples.length) {
-      logger.severe("Samples and W matrix are not the same length. Exiting.");
+      logger.severe("Samples (" + samples.length + ") and W matrix (" + W[0].length +
+              ") are not the same length. Exiting.");
     }
     double[] expectation = new double[W.length];
     for(int i = 0; i < W.length; i++){
@@ -1673,18 +1724,59 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
             mbar.mbarObservableEnsembleAverages.length);
     double[] mbarObservableEnsembleAverageUncertainties = Arrays.copyOf(mbar.mbarObservableEnsembleAverageUncertainties,
             mbar.mbarObservableEnsembleAverageUncertainties.length);
-    System.out.println("Multi-Data Observable Example u_kln:");
+    System.out.println("Multi-Data Observable Example u_kn (aka all possible data):");
     System.out.println("MBAR Observable Ensemble Averages (Potential):              " + Arrays.toString(mbarObservableEnsembleAverages));
     System.out.println("Analytical Observable Ensemble Averages (Potential):        " + Arrays.toString(testCase.analyticalObservable("potential energy")));
     System.out.println("MBAR Observable Ensemble Average Uncertainties (Potential): " + Arrays.toString(mbarObservableEnsembleAverageUncertainties));
     System.out.println();
 
-    // Reads data from xAll[0]
-    double[][][] xAll = new double[equilPositions.length][equilPositions.length][x_n.length];
+    mbar.fillAverageValues(false);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Multi-Data Simple Average u_kn (aka all possible data):");
+    System.out.println("Averages (Potential):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println();
+
+    mbar.fillAverageValues(true);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Multi-Data Weighted Average u_kn (aka all possible data):");
+    System.out.println("Averages (Potential):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println();
+
+    mbar.setObservableData(u_kln, false, true);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+     mbarObservableEnsembleAverageUncertainties = Arrays.copyOf(mbar.mbarObservableEnsembleAverageUncertainties,
+            mbar.mbarObservableEnsembleAverageUncertainties.length);
+    System.out.println("Single-Data Observable Example u_kln[i][i] (aka only observations sampled in dynamics):");
+    System.out.println("MBAR Observable Ensemble Averages (Potential):              " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println("Analytical Observable Ensemble Averages (Potential):        " + Arrays.toString(testCase.analyticalObservable("potential energy")));
+    System.out.println("MBAR Observable Ensemble Average Uncertainties (Potential): " + Arrays.toString(mbarObservableEnsembleAverageUncertainties));
+    System.out.println();
+
+    mbar.fillAverageValues(false);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Single-Data Simple Average u_kln[i][i] (aka only observations sampled in dynamics):");
+    System.out.println("Averages (Potential):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println();
+
+    mbar.fillAverageValues(true);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Single-Data Weighted Average u_kln[i][i] (aka only observations sampled in dynamics):");
+    System.out.println("Averages (Potential):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println();
+
+    // Reads all except NaN values from xAll[i][i]
+    double[][][] xAll = new double[equilPositions.length][equilPositions.length][x_n.length / equilPositions.length];
+    int counter = 0;
     for(int i = 0; i < xAll[0].length; i++){
-      for(int j = 0; j < xAll[0][0].length; j++){
-        // Copy data multiple times into same window
-        xAll[0][i][j] = x_n[j];
+      Arrays.fill(xAll[i][i], Double.NaN);
+      for(int j = 0; j < samples[i]; j++){
+        xAll[i][i][j] = x_n[counter];
+        counter++;
       }
     }
     mbar.setObservableData(xAll, false, true);
@@ -1692,10 +1784,26 @@ public class MultistateBennettAcceptanceRatio extends SequentialEstimator implem
             mbar.mbarObservableEnsembleAverages.length);
     mbarObservableEnsembleAverageUncertainties = Arrays.copyOf(mbar.mbarObservableEnsembleAverageUncertainties,
             mbar.mbarObservableEnsembleAverageUncertainties.length);
-    System.out.println("Single-Data Observable Example x_n:");
+    System.out.println("Single-Data Observable Example x_kln[i][i] or x_n (aka only observations sampled in dynamics):");
     System.out.println("MBAR Observable Ensemble Averages (Position):              " + Arrays.toString(mbarObservableEnsembleAverages));
     System.out.println("Analytical Observable Ensemble Averages (Position):        " + Arrays.toString(testCase.analyticalMeans()));
     System.out.println("MBAR Observable Ensemble Average Uncertainties (Position): " + Arrays.toString(mbarObservableEnsembleAverageUncertainties));
+    System.out.println();
+
+    mbar.fillAverageValues(false);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Simple Average x_kln[i][i] or x_n (aka only observations sampled in dynamics):");
+    System.out.println("Averages (Position):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println("Analytical Averages (Position):                            " + Arrays.toString(testCase.analyticalMeans()));
+    System.out.println();
+
+    mbar.fillAverageValues(true);
+    mbarObservableEnsembleAverages = Arrays.copyOf(mbar.mbarObservableEnsembleAverages,
+            mbar.mbarObservableEnsembleAverages.length);
+    System.out.println("Weighted Average x_kln[i][i] or x_n (aka only observations sampled in dynamics):");
+    System.out.println("Averages (Position):                                       " + Arrays.toString(mbarObservableEnsembleAverages));
+    System.out.println("Analytical Averages (Position):                            " + Arrays.toString(testCase.analyticalMeans()));
     System.out.println();
   }
 

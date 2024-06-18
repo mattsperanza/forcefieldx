@@ -281,23 +281,48 @@ class MBAR extends AlgorithmsScript {
             sb.append("]")
             logger.info(sb.toString())
         }
+        logger.info("\n")
 
         // Read in and compute expectations for observable data
-        boolean observableData = filter.readObservableData(true, false, true);
-        if (observableData){
-            logger.info("\n Observable data read in.")
-        }
         boolean biasData = filter.readObservableData(true, true, false);
         if(biasData){
             logger.info(" Bias data read in.")
         }
+        boolean observableData = filter.readObservableData(true, false, true);
+        if (observableData){
+            logger.info(" Observable data read in.")
+        }
         if(observableData) {
-            logger.info("\n MBAR Observable Data: ")
+            logger.info(format("\n MBAR Observable Data:\n           |%11s |%11s |%11s |%11s |%11s |%11s | ",
+                    "Multi", "Multi-Ave", "Multi-W", "Single", "Single-Ave", "Single-W"))
+            logger.info("           |------------|------------|------------|------------|------------|------------|")
             double[] observableValues = mbar.getObservationEnsembleAverages()
+            double multiIntegral = mbar.getTIIntegral()
+            mbar.fillAverageValues(false)
+            double[] simpleAveValues = mbar.getObservationEnsembleAverages()
+            double simpleIntegralOne = mbar.getTIIntegral()
+            mbar.fillAverageValues(true)
+            double[] simpleWeightedValues = mbar.getObservationEnsembleAverages()
+            double simpleWIntegral = mbar.getTIIntegral()
+
+            filter.readObservableData(false, false, true);
+            double[] observableValuesSingle = mbar.getObservationEnsembleAverages()
+            double singleIntegral = mbar.getTIIntegral()
+            mbar.fillAverageValues(false)
+            double[] simpleAveValues2 = mbar.getObservationEnsembleAverages()
+            double simpleIntegralTwo = mbar.getTIIntegral()
+            mbar.fillAverageValues(true)
+            double[] simpleWeightedValues2 = mbar.getObservationEnsembleAverages()
+            double simpleWIntegral2 = mbar.getTIIntegral()
             for (int i = 0; i < observableValues.length; i++) {
-                logger.info(format("     %3d = %10.4f ", i, observableValues[i]))
+                logger.info(format("     %3d = |%11.4f |%11.4f |%11.4f |%11.4f |%11.4f |%11.4f |", i,
+                        observableValues[i], simpleAveValues[i], simpleWeightedValues[i],
+                        observableValuesSingle[i], simpleAveValues2[i], simpleWeightedValues2[i]))
             }
-            logger.info(" Integral:    " + mbar.getTIIntegral())
+            logger.info("           |------------|------------|------------|------------|------------|------------|")
+            logger.info(format(" Integral:  %11.4f  %11.4f  %11.4f  %11.4f  %11.4f  %11.4f ",
+                    multiIntegral, simpleIntegralOne, simpleWIntegral,
+                    singleIntegral, simpleIntegralTwo, simpleWIntegral2))
         }
         logger.info("\n")
         // BAR to compare (negligible difference if properly converged and doesn't take long at all)
