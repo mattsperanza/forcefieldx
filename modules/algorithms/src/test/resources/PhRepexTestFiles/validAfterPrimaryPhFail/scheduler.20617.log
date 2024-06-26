@@ -1,0 +1,85 @@
+Thu Jun 13 11:00:21 CDT 2024 Started Parallel Java v20120620
+Thu Jun 13 11:00:21 CDT 2024 Job Scheduler at /127.0.0.1:20617
+Thu Jun 13 11:00:21 CDT 2024 Web interface at /127.0.0.1:8080
+Thu Jun 13 11:00:21 CDT 2024 Backend node0 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node1 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node2 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node3 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node4 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node5 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node6 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node7 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node8 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node9 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node10 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node11 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node12 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node13 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node14 at localhost, 1 CPU
+Thu Jun 13 11:00:21 CDT 2024 Backend node15 at localhost, 1 CPU
+Thu Jun 13 11:00:49 CDT 2024 Job 1 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node0, rank=0, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node1, rank=1, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node2, rank=2, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node3, rank=3, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node4, rank=4, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node5, rank=5, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node6, rank=6, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 assigned node7, rank=7, CPUs=1
+Thu Jun 13 11:00:49 CDT 2024 Job 1 started
+Thu Jun 13 11:00:59 CDT 2024 Job 1 canceled: User canceled job
+Thu Jun 13 11:02:42 CDT 2024 Job 2 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node8, rank=0, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node9, rank=1, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node10, rank=2, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node11, rank=3, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node12, rank=4, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node13, rank=5, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node14, rank=6, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 assigned node15, rank=7, CPUs=1
+Thu Jun 13 11:02:42 CDT 2024 Job 2 started
+Thu Jun 13 11:02:49 CDT 2024 Job 2 finished
+Thu Jun 13 11:04:38 CDT 2024 Job 3 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node0, rank=0, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node1, rank=1, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node2, rank=2, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node3, rank=3, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node4, rank=4, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node5, rank=5, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node6, rank=6, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 assigned node7, rank=7, CPUs=1
+Thu Jun 13 11:04:38 CDT 2024 Job 3 started
+Thu Jun 13 11:05:56 CDT 2024 Job 3 canceled: User canceled job
+Thu Jun 13 11:07:11 CDT 2024 Job 4 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node8, rank=0, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node9, rank=1, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node10, rank=2, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node11, rank=3, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node12, rank=4, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node13, rank=5, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node14, rank=6, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 assigned node15, rank=7, CPUs=1
+Thu Jun 13 11:07:11 CDT 2024 Job 4 started
+Thu Jun 13 11:07:18 CDT 2024 Job 4 finished
+Thu Jun 13 11:07:27 CDT 2024 Job 5 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node0, rank=0, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node1, rank=1, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node2, rank=2, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node3, rank=3, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node4, rank=4, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node5, rank=5, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node6, rank=6, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 assigned node7, rank=7, CPUs=1
+Thu Jun 13 11:07:27 CDT 2024 Job 5 started
+Thu Jun 13 11:08:10 CDT 2024 Job 5 finished
+Thu Jun 13 11:08:36 CDT 2024 Job 6 queued, username=msperanza, nn=8, np=8, nt=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node8, rank=0, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node9, rank=1, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node10, rank=2, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node11, rank=3, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node12, rank=4, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node13, rank=5, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node14, rank=6, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 assigned node15, rank=7, CPUs=1
+Thu Jun 13 11:08:36 CDT 2024 Job 6 started
+Thu Jun 13 11:08:57 CDT 2024 Job 6 canceled: User canceled job
