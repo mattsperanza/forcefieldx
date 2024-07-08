@@ -37,6 +37,7 @@
 // ******************************************************************************
 package ffx.numerics.multipole;
 
+import static ffx.numerics.special.Erf.erf;
 import static ffx.numerics.special.Erf.erfc;
 import static java.lang.Math.PI;
 import static org.apache.commons.math3.util.FastMath.exp;
@@ -94,9 +95,9 @@ public class EwaldTensorGlobal extends CoulombTensorGlobal {
    * @param beta        The Ewald convergence parameter.
    * @param ewaldSource Location to store the source terms.
    */
-  protected static void initEwaldSource(int order, double beta, double[] ewaldSource) {
-    double prefactor = 2.0 * beta / sqrtPI;
-    double twoBeta2 = -2.0 * beta * beta;
+  public static void initEwaldSource(int order, double beta, double[] ewaldSource) {
+    double prefactor = 2.0 / sqrtPI;
+    double twoBeta2 = (-2.0);
     for (int n = 0; n <= order; n++) {
       ewaldSource[n] = prefactor * pow(twoBeta2, n);
     }
@@ -111,7 +112,7 @@ public class EwaldTensorGlobal extends CoulombTensorGlobal {
   protected void source(double[] T000) {
     // Generate source terms for real space Ewald summation.
     if (beta > 0.0) {
-      fillEwaldSource(order, beta, ewaldSource, R, T000);
+      fillCoulombSource(order, 1, ewaldSource, R, T000);
     } else {
       // For beta = 0, generate tensors for the Coulomb operator.
       super.source(T000);
@@ -145,4 +146,20 @@ public class EwaldTensorGlobal extends CoulombTensorGlobal {
     }
   }
 
+  public static void fillCoulombSource(int order, double beta, double[] ewaldSource, double R, double[] T000){
+    double betaR = beta * R;
+    double betaR2 = betaR * betaR;
+    double iBetaR2 = 1.0 / (2.0 * betaR2);
+    double expBR2 = exp(-betaR2);
+    // Fn(x^2) = Sqrt(PI) * erf(x) / (2*x)
+    // where x = R
+    double Fn = sqrtPI * erf(R) / (2.0 * betaR);
+    for (int n = 0; n <= order; n++) {
+      T000[n] = ewaldSource[n] * Fn;
+      // Generate F(n+1)c from Fnc (Eq. 2.24 in Sagui et al.)
+      // F(n+1)c = [(2*n+1) Fnc(x) - exp(-x)] / 2x
+      // where x = (Beta*R)^2
+      Fn = ((2.0 * n + 1.0) * Fn - expBR2) * iBetaR2;
+    }
+  }
 }

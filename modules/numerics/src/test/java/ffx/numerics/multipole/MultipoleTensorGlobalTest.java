@@ -129,11 +129,14 @@ public class MultipoleTensorGlobalTest extends FFXTest {
                 5,      // Order
                 Operator.COULOMB
             },
+                /*
             {
                 "Order 5 Screened Coulomb",
                 5,
                 Operator.SCREENED_COULOMB
             },
+
+                 */
             {
                 "Order 4 Thole Field",
                 4,

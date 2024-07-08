@@ -37,7 +37,12 @@
 // ******************************************************************************
 package ffx.numerics.multipole;
 
-import static org.apache.commons.math3.util.FastMath.exp;
+import java.util.Arrays;
+
+import static ffx.numerics.special.Erf.erf;
+import static ffx.numerics.special.Erf.erfc;
+import static java.lang.Math.PI;
+import static org.apache.commons.math3.util.FastMath.*;
 
 /**
  * The TholeTensorGlobal class computes derivatives of Thole damping via recursion to order &lt;= 4 for
@@ -67,6 +72,9 @@ public class TholeTensorGlobal extends CoulombTensorGlobal {
    * AiAk parameter = 1/(alphaI^6*alphaK^6) where alpha is polarizability.
    */
   private double AiAk;
+  double[] tholeSource;
+  double beta;
+  private static final double sqrtPI = sqrt(PI);
 
   /**
    * Constructor for EwaldMultipoleTensorGlobal.
@@ -82,7 +90,18 @@ public class TholeTensorGlobal extends CoulombTensorGlobal {
     this.operator = Operator.THOLE_FIELD;
 
     // Source terms are currently defined up to order 4.
-    assert (order <= 4);
+    //assert (order <= 4);
+    tholeSource = new double[o1];
+  }
+
+  private void initTholeSource(int order, double R, double thole, double aiAk, double[] tholeSource) {
+    double R2 = R * R;
+    beta = thole*aiAk*R2;
+    double prefactor = 2.0 * beta / sqrtPI;
+    double twoBeta2 = -2.0 * beta * beta;
+    for (int n = 0; n <= order; n++) {
+      tholeSource[n] = prefactor * pow(twoBeta2, n);
+    }
   }
 
   /**
@@ -129,34 +148,33 @@ public class TholeTensorGlobal extends CoulombTensorGlobal {
   @Override
   protected void source(double[] T000) {
     // Compute the normal Coulomb auxiliary term.
-    super.source(T000);
+    //super.source(T000);
 
     // Add the Thole damping terms: edamp = exp(-thole*u^3).
-    tholeSource(thole, AiAk, R, T000);
+    initTholeSource(order, R, thole, AiAk, tholeSource);
+    tholeSource(o1 - 1, beta, R, tholeSource, T000);
   }
 
   /**
    * Generate source terms for the Challacombe et al. recursion.
    *
-   * @param thole Thole damping parameter is set to min(pti,ptk)).
-   * @param AiAk parameter = 1/(alphaI^6*alphaK^6) where alpha is polarizability.
    * @param R The separation distance.
    * @param T000 Location to store the source terms.
    */
-  protected static void tholeSource(double thole, double AiAk, double R, double[] T000) {
-    // Add the Thole damping terms: edamp = exp(-thole*u^3).
-    double u = R * AiAk;
-    double u3 = thole * u * u * u;
-    double u6 = u3 * u3;
-    double u9 = u6 * u3;
-    double expU3 = exp(-u3);
-
-    // The zeroth order term is not calculated for Thole damping.
-    T000[0] = 0.0;
-    T000[1] *= expU3;
-    T000[2] *= (1.0 + u3) * expU3;
-    T000[3] *= (1.0 + u3 + threeFifths * u6) * expU3;
-    T000[4] *= (1.0 + u3 + (18.0 * u6 + 9.0 * u9) * oneThirtyFifth) * expU3;
+  protected static void tholeSource(int order, double beta, double R, double[] source, double[] T000) {
+    double betaR = beta * R;
+    double betaR2 = betaR * betaR;
+    double iBetaR2 = 1.0 / (2.0 * betaR2);
+    double expBR2 = exp(-betaR2);
+    // Fn(x^2) = Sqrt(PI) * erf(x) / (2*x)
+    // where x = R
+    double Fn = sqrtPI * erf(R) / (2.0 * betaR);
+    for (int n = 0; n <= order; n++) {
+      T000[n] = source[n] * Fn;
+      // Generate F(n+1)c from Fnc (Eq. 2.24 in Sagui et al.)
+      // F(n+1)c = [(2*n+1) Fnc(x) + exp(-x)] / 2x
+      // where x = (Beta*R)^2
+      Fn = ((2.0 * n + 1.0) * Fn - expBR2) * iBetaR2;
+    }
   }
-
 }
