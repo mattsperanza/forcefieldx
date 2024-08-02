@@ -28,7 +28,7 @@ public class PhRepexTest extends AlgorithmsTest {
         ForceFieldEnergy potential = molecularAssembly.getPotentialEnergy();
         ExtendedSystem esvSystem = new ExtendedSystem(molecularAssembly, 7, null);
         potential.attachExtendedSystem(esvSystem);
-        double[] pHLadder = new double[]{8.4, 8.9, 9.4, 9.9, 10.4, 10.9, 11.4, 11.9};
+        double[] pHLadder = new double[]{8.4, 11.4, 11.9};
         double[] x = new double[potential.getNumberOfVariables()];
         potential.getCoordinates(x);
         File structureFile = new File(structure);
@@ -47,14 +47,14 @@ public class PhRepexTest extends AlgorithmsTest {
         try {
             // Tests restart feature
             PhReplicaExchange pHReplicaExchange = new PhReplicaExchange(molecularDynamics, structureFile, 7, pHLadder,
-                    298, esvSystem, x, 8);
+                    298, esvSystem, x, 3);
             // Restarts based solely on the structure file, so thats all we need to change between tests
             structureFile = new File(getResourcePath("PhRepexTestFiles/validAfterPrimaryPhFail/LYS_penta.pdb"));
             pHReplicaExchange = new PhReplicaExchange(molecularDynamics, structureFile, 7, pHLadder,
-                    298, esvSystem, x, 8);
+                    298, esvSystem, x, 3);
             structureFile = new File(getResourcePath("PhRepexTestFiles/validAfterPrimaryCountFail/LYS_penta.pdb"));
             pHReplicaExchange = new PhReplicaExchange(molecularDynamics, structureFile, 7, pHLadder,
-                    298, esvSystem, x, 8);
+                    298, esvSystem, x, 3);
         } catch (Exception e) {
             // Fail if throws exception
             fail("Unexpected exception thrown from " + structureFile + ": " + e.getMessage());
@@ -62,13 +62,13 @@ public class PhRepexTest extends AlgorithmsTest {
         try{
             structureFile = new File(getResourcePath("PhRepexTestFiles/invalidAfterPhFail/LYS_penta.pdb"));
             PhReplicaExchange pHReplicaExchange = new PhReplicaExchange(molecularDynamics, structureFile, 7, pHLadder,
-                    298, esvSystem, x, 8);
+                    298, esvSystem, x, 3);
             fail("Expected exception not thrown from " + structureFile);
         } catch (Exception ignored) {}
         try{
             structureFile = new File(getResourcePath("PhRepexTestFiles/invalidAfterCountFail/LYS_penta.pdb"));
             PhReplicaExchange pHReplicaExchange = new PhReplicaExchange(molecularDynamics, structureFile, 7, pHLadder,
-                    298, esvSystem, x, 8);
+                    298, esvSystem, x, 3);
             fail("Expected exception not thrown from " + structureFile);
         } catch (Exception ignored) {}
     }

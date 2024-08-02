@@ -2242,15 +2242,10 @@ public class ForceFieldEnergy implements CrystalPotential, LambdaInterface {
   @Override
   public double energyAndGradient(double[] x, double[] g, boolean verbose) {
     assert Arrays.stream(x).allMatch(Double::isFinite);
-    logger.info(" In e & G");
     // Un-scale the coordinates.
     unscaleCoordinates(x);
-    logger.info(" Unscaled coords");
     // Set coordinates.
-    setCoordinates(x);
-    logger.info(" Trying Energy");
     double e = energy(true, verbose);
-    logger.info(" Finished energy");
 
     // Try block already exists inside energy(boolean, boolean), so only
     // need to try-catch fillGradient.
@@ -2259,8 +2254,6 @@ public class ForceFieldEnergy implements CrystalPotential, LambdaInterface {
 
       // Scale the coordinates and gradients.
       scaleCoordinatesAndGradient(x, g);
-
-      logger.info("Finished scaling");
 
       if (maxDebugGradient < Double.MAX_VALUE) {
         boolean extremeGrad = Arrays.stream(g)

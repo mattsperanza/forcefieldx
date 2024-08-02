@@ -410,7 +410,6 @@ public class OpenMMEnergy extends ForceFieldEnergy {
    * @return The energy (kcal/mol)
    */
   public double energyAndGradientFFX(double[] x, double[] g) {
-    logger.info(" In e&GFFX");
     return super.energyAndGradient(x, g, false);
   }
 
@@ -616,11 +615,8 @@ public class OpenMMEnergy extends ForceFieldEnergy {
    */
   @Override
   public void setCrystal(Crystal crystal) {
-    logger.warning("CPU set Crystal");
     super.setCrystal(crystal);
-    logger.warning("Set omm context periodic box vec attempt");
     openMMContext.setPeriodicBoxVectors(crystal);
-    logger.warning("Done!");
   }
 
   public void setLambdaStart(double lambdaStart) {
