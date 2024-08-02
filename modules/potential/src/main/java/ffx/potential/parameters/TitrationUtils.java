@@ -1692,7 +1692,7 @@ public class TitrationUtils {
 
   /**
    * Predict pKa from a set of residue fractions (deprotonated / (deprotonated + protonated)). This method minimizes
-   * the L2 loss between the the measured residue fractions and various pKa/Hill-coefficient values to get pKa/Hill-
+   * the L2 loss between the measured residue fractions and various pKa/Hill-coefficient values to get pKa/Hill-
    * coefficient predictions.
    *
    * @param pHScale pH values at which the residue fractions were measured
@@ -1879,6 +1879,7 @@ public class TitrationUtils {
     HIStoHID(7.00, 40.20, 20.92, 36.65, 18.83, 0.0, -64.317, 30.350, 0.0,  AminoAcid3.HIS, AminoAcid3.HID), //HD1 is the proton that is lost
     HIStoHIE(6.60, 37.44, 18.14, 34.65, 17.95,0.0, -62.931, 32.000, 0.0,AminoAcid3.HIS, AminoAcid3.HIE),
     HIDtoHIE(Double.NaN, 0.00, 0.0, 0.0, 0.0,0.0, -36.830, 34.325, 0.0,AminoAcid3.HID, AminoAcid3.HIE);
+
     //TerminalNH3toNH2(8.23, 0.0, 00.00, AminoAcidUtils.AminoAcid3.UNK, AminoAcidUtils.AminoAcid3.UNK),
     //TerminalCOOHtoCOO(3.55, 0.0, 00.00, AminoAcidUtils.AminoAcid3.UNK, AminoAcidUtils.AminoAcid3.UNK);
 
@@ -1897,9 +1898,11 @@ public class TitrationUtils {
     public final AminoAcid3 deprotForm;
 
     /** Invoked by Enum; use the factory method to obtain instances. */
+
+
     Titration(double pKa, double freeEnergyDiff,double freeEnergyDiff2, double freeEnergyDiffGK,
               double freeEnergyDiffGK2, double cubic, double quadratic, double linear, double offset,
-        AminoAcid3 protForm, AminoAcid3 deprotForm) {
+              AminoAcid3 protForm, AminoAcid3 deprotForm) {
       this.pKa = pKa;
       this.freeEnergyDiff = freeEnergyDiff;
       this.freeEnergyDiff2 = freeEnergyDiff2;
