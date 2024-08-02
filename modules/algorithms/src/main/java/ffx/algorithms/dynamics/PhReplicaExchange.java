@@ -814,17 +814,6 @@ public class PhReplicaExchange implements Terminatable {
     System.arraycopy(pH2Rank, 0, temp2, 0, pH2Rank.length);
     System.arraycopy(rank2Ph, 0, temp2, pH2Rank.length, rank2Ph.length);
 
-    exchange();
-    int[] temp3 = new int[pH2Rank.length + rank2Ph.length];
-    System.arraycopy(pH2Rank, 0, temp3, 0, pH2Rank.length);
-    System.arraycopy(rank2Ph, 0, temp3, pH2Rank.length, rank2Ph.length);
-
-    exchange();
-    int[] temp4 = new int[pH2Rank.length + rank2Ph.length];
-    System.arraycopy(pH2Rank, 0, temp4, 0, pH2Rank.length);
-    System.arraycopy(rank2Ph, 0, temp4, pH2Rank.length, rank2Ph.length);
-
-
     return temp2;
   }
 }
