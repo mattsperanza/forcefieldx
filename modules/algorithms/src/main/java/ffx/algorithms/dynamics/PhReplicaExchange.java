@@ -706,18 +706,12 @@ public class PhReplicaExchange implements Terminatable {
     potential.energy(x);
     openMM.setCoordinates(x);
     
-    logger.info(" -------------------------------->> Begin OMM Dynamics w/ energy (cpu): " + potential.energy(x));
     openMM.dynamic(confSteps, timeStep, printInterval, saveInterval, temp, initVelocities, dyn);
-    logger.info(" -------------------------------->> End OMM Dynamics");
     x = openMM.getCoordinates();
-    logger.info(" Got coords from gpu");
     replica.setCoordinates(x);
-    logger.info(" Set cpu coords");
 
     double forceWriteInterval = titrSteps * .001;
-    logger.info("Start cpu dyn");
     replica.dynamic(titrSteps, timeStep, printInterval, forceWriteInterval, temp, initVelocities, dyn);
-    logger.info(" End cpu dyn");
     reEvaulateAcidostats();
 
     extendedSystem.getESVHistogram(parametersHis[rank]);
