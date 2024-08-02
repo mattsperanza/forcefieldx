@@ -432,6 +432,8 @@ public class MolecularDynamicsOpenMM extends MolecularDynamics {
    */
   private void updateFromOpenMM(long i, boolean running) {
 
+    double priorPE = state.getPotentialEnergy();
+
     obtainVariables.run();
 
     if (running) {
