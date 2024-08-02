@@ -2245,6 +2245,7 @@ public class ForceFieldEnergy implements CrystalPotential, LambdaInterface {
     // Un-scale the coordinates.
     unscaleCoordinates(x);
     // Set coordinates.
+    setCoordinates(x);
     double e = energy(true, verbose);
 
     // Try block already exists inside energy(boolean, boolean), so only
