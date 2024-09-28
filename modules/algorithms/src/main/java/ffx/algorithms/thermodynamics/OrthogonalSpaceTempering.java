@@ -451,6 +451,8 @@ public class OrthogonalSpaceTempering implements CrystalPotential, LambdaInterfa
 
       // Metadynamics grid counts (every 'countInterval' steps).
       if (energyCount % histogram.hd.countInterval == 0) {
+        logger.info(format("Count: %d Lambda: %6.4f dForceFieldEdL: %10.4f dUdLambda: %10.4f Bias.mag: %10.4f", histogram.hd.counts,
+                lambdaInterface.getLambda(), dForceFieldEnergydL, dUdLambda, histogram.hd.biasMag));
         histogram.addBias(dForceFieldEnergydL);
 
         // Locally optimize the current state.
