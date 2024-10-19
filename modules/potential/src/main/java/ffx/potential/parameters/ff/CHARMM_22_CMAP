@@ -771,18 +771,18 @@ biotype    240  CB    "Aspartic Acid          "     54
 biotype    241  HB    "Aspartic Acid          "      1
 biotype    242  CG    "Aspartic Acid          "     55
 biotype    243  OD    "Aspartic Acid          "     78
-biotype    244  N     "Aspartic Acid (COOH)   "     -1
-biotype    245  CA    "Aspartic Acid (COOH)   "     -1
-biotype    246  C     "Aspartic Acid (COOH)   "     -1
-biotype    247  HN    "Aspartic Acid (COOH)   "     -1
-biotype    248  O     "Aspartic Acid (COOH)   "     -1
-biotype    249  HA    "Aspartic Acid (COOH)   "     -1
-biotype    250  CB    "Aspartic Acid (COOH)   "     -1
-biotype    251  HB    "Aspartic Acid (COOH)   "     -1
-biotype    252  CG    "Aspartic Acid (COOH)   "     -1
-biotype    253  OD1   "Aspartic Acid (COOH)   "     -1
-biotype    254  OD2   "Aspartic Acid (COOH)   "     -1
-biotype    255  HD2   "Aspartic Acid (COOH)   "     -1
+biotype    244  N     "Aspartic Acid (COOH)   "     63
+biotype    245  CA    "Aspartic Acid (COOH)   "      3
+biotype    246  C     "Aspartic Acid (COOH)   "     23
+biotype    247  HN    "Aspartic Acid (COOH)   "      3
+biotype    248  O     "Aspartic Acid (COOH)   "     74
+biotype    249  HA    "Aspartic Acid (COOH)   "      4
+biotype    250  CB    "Aspartic Acid (COOH)   "     54
+biotype    251  HB    "Aspartic Acid (COOH)   "      1
+biotype    252  CG    "Aspartic Acid (COOH)   "     55
+biotype    253  OD1   "Aspartic Acid (COOH)   "     78
+biotype    254  OD2   "Aspartic Acid (COOH)   "     78
+biotype    255  HD2   "Aspartic Acid (COOH)   "     89
 biotype    256  N     "Asparagine             "     63
 biotype    257  CA    "Asparagine             "     23
 biotype    258  C     "Asparagine             "     20
