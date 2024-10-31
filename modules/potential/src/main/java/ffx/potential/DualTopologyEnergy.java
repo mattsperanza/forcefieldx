@@ -342,9 +342,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     Atom[] atoms2 = topology2.getAtomArray();
 
     ForceField forceField1 = topology1.getForceField();
-    doValenceRestraint1 = forceField1.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
+    doValenceRestraint1 = false; // forceField1.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
     ForceField forceField2 = topology2.getForceField();
-    doValenceRestraint2 = forceField2.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
+    doValenceRestraint2 = false; //forceField2.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
 
     useFirstSystemBondedEnergy = forceField2.getBoolean("USE_FIRST_SYSTEM_BONDED_ENERGY", false);
 

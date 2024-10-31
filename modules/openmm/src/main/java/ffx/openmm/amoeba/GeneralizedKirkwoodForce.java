@@ -161,7 +161,7 @@ public class GeneralizedKirkwoodForce extends Force {
    * @param neck     The neck of the particle.
    */
   public void setParticleParameters_1(int index, double charge, double radius, double hctScale, double descreen, double neck) {
-    OpenMM_AmoebaGeneralizedKirkwoodForce_setParticleParameters(pointer, index, charge, radius, hctScale, descreen, neck);
+    //OpenMM_AmoebaGeneralizedKirkwoodForce_setParticleParameters(pointer, index, charge, radius, hctScale, descreen, neck);
   }
 
   /**
