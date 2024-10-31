@@ -854,8 +854,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     if (lambda <= 1.0 && lambda >= 0.0) {
       this.lambda = lambda;
       double oneMinusLambda = 1.0 - lambda;
-      lambdaInterface1.setLambda(lambda);
-      lambdaInterface2.setLambda(oneMinusLambda);
+      // Modifications for OST testing (we only want dUdL = U0 - U1)
+      lambdaInterface1.setLambda(1);
+      lambdaInterface2.setLambda(1);
 
       f1L = switchFunction.valueAt(lambda);
       dF1dL = switchFunction.firstDerivative(lambda);
@@ -1604,9 +1605,10 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
         fill(gl1, 0.0);
         fill(rgl1, 0.0);
         energy1 = potential1.energyAndGradient(x1, g1, verbose);
-        dEdL_1 = lambdaInterface1.getdEdL();
-        d2EdL2_1 = lambdaInterface1.getd2EdL2();
-        lambdaInterface1.getdEdXdL(gl1);
+        // Modifications for OST testing
+        dEdL_1 = 0; //lambdaInterface1.getdEdL();
+        d2EdL2_1 = 0; //lambdaInterface1.getd2EdL2();
+        //lambdaInterface1.getdEdXdL(gl1);
         if (doValenceRestraint1 && potential1 instanceof ForceFieldEnergy) {
           forceFieldEnergy1.setLambdaBondedTerms(true, useFirstSystemBondedEnergy);
           if (verbose) {
@@ -1677,9 +1679,10 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
 
         // Compute the energy and gradient of topology 2.
         energy2 = potential2.energyAndGradient(x2, g2, verbose);
-        dEdL_2 = -lambdaInterface2.getdEdL();
-        d2EdL2_2 = lambdaInterface2.getd2EdL2();
-        lambdaInterface2.getdEdXdL(gl2);
+        // Modifications for ost testing
+        dEdL_2 = 0; //-lambdaInterface2.getdEdL();
+        d2EdL2_2 = 0; //lambdaInterface2.getd2EdL2();
+        //lambdaInterface2.getdEdXdL(gl2);
         if (useSymOp) {
           // Rotate the gradient back for appropriate atoms.
           for (int i = 0; i < numSymOps; i++) {
