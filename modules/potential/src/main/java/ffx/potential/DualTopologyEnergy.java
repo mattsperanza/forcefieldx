@@ -318,6 +318,13 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
    */
   private boolean useSymOp = false;
 
+  public DualTopologyEnergy(
+        MolecularAssembly topology1,
+        MolecularAssembly topology2,
+        UnivariateSwitchingFunction switchFunction) {
+        this(topology1, topology2, switchFunction, new ArrayList<>(), new ArrayList<>());
+    }
+
   /**
    * Constructor for DualTopologyEnergy.
    *
@@ -328,7 +335,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
   public DualTopologyEnergy(
       MolecularAssembly topology1,
       MolecularAssembly topology2,
-      UnivariateSwitchingFunction switchFunction) {
+      UnivariateSwitchingFunction switchFunction,
+      List<Integer> uniqueA,
+      List<Integer> uniqueB) {
     forceFieldEnergy1 = topology1.getPotentialEnergy();
     forceFieldEnergy2 = topology2.getPotentialEnergy();
     potential1 = forceFieldEnergy1;
@@ -353,19 +362,21 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     int shared2 = 0;
     int activeCount1 = 0;
     int activeCount2 = 0;
-    for (Atom a1 : atoms1) {
+    for (int i = 0; i < atoms1.length; i++) {
+      Atom a1 = atoms1[i];
       if (a1.isActive()) {
         activeCount1++;
-        if (!a1.applyLambda()) {
-          shared1++;
+        if (!a1.applyLambda() && !uniqueA.contains(i*3)) {
+            shared1++;
         }
       }
     }
-    for (Atom a2 : atoms2) {
+    for (int i = 0; i < atoms2.length; i++) {
+      Atom a2 = atoms2[i];
       if (a2.isActive()) {
         activeCount2++;
-        if (!a2.applyLambda()) {
-          shared2++;
+        if (!a2.applyLambda() && !uniqueB.contains(i*3)) {
+            shared2++;
         }
       }
     }
@@ -381,7 +392,7 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     for (Atom a1 : atoms1) {
       if (a1.isActive()) {
         activeAtoms1[index] = a1;
-        if (a1.applyLambda()) {
+        if (a1.applyLambda() || uniqueA.contains(index*3)) {
           // This atom is softcore with independent coordinates.
           sharedAtoms1[index] = false;
         }
@@ -392,7 +403,7 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     for (Atom a2 : atoms2) {
       if (a2.isActive()) {
         activeAtoms2[index] = a2;
-        if (a2.applyLambda()) {
+        if (a2.applyLambda() || uniqueB.contains(index*3)) {
           // This atom is softcore with independent coordinates.
           sharedAtoms2[index] = false;
         }
@@ -488,11 +499,11 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     if(!useSymOp) {
       for (int i = 0; i < nShared; i++) {
         Atom a1 = atoms1[i1++];
-        while (a1.applyLambda()) {
+        while (a1.applyLambda() || uniqueA.contains((i1-1)*3)) {
           a1 = atoms1[i1++];
         }
         Atom a2 = atoms2[i2++];
-        while (a2.applyLambda()) {
+        while (a2.applyLambda() || uniqueB.contains((i2-1)*3)) {
           a2 = atoms2[i2++];
         }
         assert (a1.getX() == a2.getX());
@@ -855,8 +866,8 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
       this.lambda = lambda;
       double oneMinusLambda = 1.0 - lambda;
       // Modifications for OST testing (we only want dUdL = U0 - U1)
-      lambdaInterface1.setLambda(1);
-      lambdaInterface2.setLambda(1);
+      lambdaInterface1.setLambda(lambda);
+      lambdaInterface2.setLambda(oneMinusLambda);
 
       f1L = switchFunction.valueAt(lambda);
       dF1dL = switchFunction.firstDerivative(lambda);

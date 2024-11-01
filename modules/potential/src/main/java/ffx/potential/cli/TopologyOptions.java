@@ -188,15 +188,8 @@ public class TopologyOptions {
     int nargs = assemblies.length;
     int numPar = getNumParallel(threadsAvail, nargs);
     UnivariateSwitchingFunction sf = nargs > 1 ? getSwitchingFunction() : null;
-    List<Integer> uniqueA;
-    List<Integer> uniqueB;
-    if (assemblies.length >= 4) {
-      uniqueA = getUniqueAtomsA(assemblies[0]);
-      uniqueB = getUniqueAtomsB(assemblies[2]);
-    } else {
-      uniqueA = Collections.emptyList();
-      uniqueB = Collections.emptyList();
-    }
+    List<Integer> uniqueA = getUniqueAtomsA(assemblies[0]);
+    List<Integer> uniqueB = getUniqueAtomsB(assemblies[1]);
     return getTopology(assemblies, sf, uniqueA, uniqueB, numPar, sb);
   }
 
@@ -262,7 +255,7 @@ public class TopologyOptions {
       }
       case 2 -> {
         sb.append("Dual Topology ");
-        DualTopologyEnergy dte = new DualTopologyEnergy(topologies[0], topologies[1], sf);
+        DualTopologyEnergy dte = new DualTopologyEnergy(topologies[0], topologies[1], sf, uniqueA, uniqueB);
         if (numParallel == 2) {
           dte.setParallel(true);
         }
@@ -302,7 +295,7 @@ public class TopologyOptions {
     if (!unshared.isEmpty()) {
       logger.info(" Finding unique atoms for dual topology " + label);
       Set<Integer> indices = new HashSet<>();
-      String[] toks = unshared.split("\\.");
+      String[] toks = unshared.split("[.,;]");
       Atom[] atoms1 = assembly.getAtomArray();
       for (String range : toks) {
         Matcher m = AlchemicalOptions.rangeRegEx.matcher(range);
