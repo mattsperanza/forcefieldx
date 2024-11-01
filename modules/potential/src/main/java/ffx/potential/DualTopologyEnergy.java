@@ -342,9 +342,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
     Atom[] atoms2 = topology2.getAtomArray();
 
     ForceField forceField1 = topology1.getForceField();
-    doValenceRestraint1 = false; // forceField1.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
+    doValenceRestraint1 = forceField1.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
     ForceField forceField2 = topology2.getForceField();
-    doValenceRestraint2 = false; //forceField2.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
+    doValenceRestraint2 = forceField2.getBoolean("LAMBDA_VALENCE_RESTRAINTS", true);
 
     useFirstSystemBondedEnergy = forceField2.getBoolean("USE_FIRST_SYSTEM_BONDED_ENERGY", false);
 
@@ -1606,9 +1606,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
         fill(rgl1, 0.0);
         energy1 = potential1.energyAndGradient(x1, g1, verbose);
         // Modifications for OST testing
-        dEdL_1 = 0; //lambdaInterface1.getdEdL();
-        d2EdL2_1 = 0; //lambdaInterface1.getd2EdL2();
-        //lambdaInterface1.getdEdXdL(gl1);
+        dEdL_1 = lambdaInterface1.getdEdL();
+        d2EdL2_1 = lambdaInterface1.getd2EdL2();
+        lambdaInterface1.getdEdXdL(gl1);
         if (doValenceRestraint1 && potential1 instanceof ForceFieldEnergy) {
           forceFieldEnergy1.setLambdaBondedTerms(true, useFirstSystemBondedEnergy);
           if (verbose) {
@@ -1680,9 +1680,9 @@ public class DualTopologyEnergy implements CrystalPotential, LambdaInterface {
         // Compute the energy and gradient of topology 2.
         energy2 = potential2.energyAndGradient(x2, g2, verbose);
         // Modifications for ost testing
-        dEdL_2 = 0; //-lambdaInterface2.getdEdL();
-        d2EdL2_2 = 0; //lambdaInterface2.getd2EdL2();
-        //lambdaInterface2.getdEdXdL(gl2);
+        dEdL_2 = -lambdaInterface2.getdEdL();
+        d2EdL2_2 = lambdaInterface2.getd2EdL2();
+        lambdaInterface2.getdEdXdL(gl2);
         if (useSymOp) {
           // Rotate the gradient back for appropriate atoms.
           for (int i = 0; i < numSymOps; i++) {
